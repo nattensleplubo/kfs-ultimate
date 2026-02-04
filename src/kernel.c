@@ -1,4 +1,5 @@
 #include	<stdint.h>
+#include	"k_lib.h"
 
 # define	VGA_MEMORY	0xB8000
 # define	VGA_WIDTH	80
@@ -19,5 +20,6 @@ void	terminal_writestring(const char *str) {
 
 void	kernel_main(void) {
 	terminal_writestring("Hello from my kernel!");
+	k_strlen("Test string");
 	while(1);
 }
