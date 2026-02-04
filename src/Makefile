@@ -19,6 +19,9 @@ kernel.o: kernel.c
 k_lib.o: k_lib.c
 	$(CC) $(CFLAGS) -c k_lib.c -o k_lib.o
 
+# vga.o: vga.c
+# 	$(CC) $(CFLAGS) -c vga.c -o vga.o
+
 iso: kernel.bin
 	mkdir -p isodir/boot/grub
 	cp kernel.bin isodir/boot/kernel.bin
