@@ -34,7 +34,7 @@ iso: kernel.bin
 run: kernel.bin
 	qemu-system-i386 -kernel kernel.bin
 
-run-iso: iso
+run-iso: docker-iso
 	qemu-system-i386 -cdrom mykernel.iso
 
 clean:
