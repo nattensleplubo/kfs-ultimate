@@ -1,11 +1,12 @@
 AS = nasm -f elf32 -g -F dwarf
 CC = gcc -m32
 LD = ld -m elf_i386
-
 CFLAGS = -std=c99 -ffreestanding -O2 -Wall -Wextra \
-	 -fno-builtin -fno-stack-protector -nostdlib -nodefaultlibs
+     -fno-builtin -fno-stack-protector -nostdlib -nodefaultlibs
 
-OBJS = boot.o kernel.o k_lib.o
+C_SOURCES = $(wildcard *.c)
+C_OBJS = $(C_SOURCES:.c=.o)
+OBJS = boot.o $(C_OBJS)
 
 kernel.bin: $(OBJS)
 	$(LD) -T linker.ld -o kernel.bin $(OBJS) -nostdlib
@@ -13,20 +14,14 @@ kernel.bin: $(OBJS)
 boot.o: boot.asm
 	$(AS) boot.asm -o boot.o
 
-kernel.o: kernel.c
-	$(CC) $(CFLAGS) -c kernel.c -o kernel.o
-
-k_lib.o: k_lib.c
-	$(CC) $(CFLAGS) -c k_lib.c -o k_lib.o
-
-# vga.o: vga.c
-# 	$(CC) $(CFLAGS) -c vga.c -o vga.o
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 iso: kernel.bin
 	mkdir -p isodir/boot/grub
 	cp kernel.bin isodir/boot/kernel.bin
 	echo 'menuentry "My Kernel" {' > isodir/boot/grub/grub.cfg
-	echo '	multiboot /boot/kernel.bin' >> isodir/boot/grub/grub.cfg
+	echo '  multiboot /boot/kernel.bin' >> isodir/boot/grub/grub.cfg
 	echo '}' >> isodir/boot/grub/grub.cfg
 	grub-mkrescue -o mykernel.iso isodir
 	rm -rf isodir
