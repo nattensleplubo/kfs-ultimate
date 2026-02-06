@@ -132,4 +132,5 @@ static void delay(void)
 void	kernel_main(void) {
 	terminal_init();
 	terminal_writestring("Hello, kernel World!\n");
+	// while (1);
 }

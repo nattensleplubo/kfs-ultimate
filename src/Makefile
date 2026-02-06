@@ -1,4 +1,4 @@
-AS = as --32
+AS = nasm -f elf32 -g -F dwarf
 CC = gcc -m32
 LD = ld -m elf_i386
 
@@ -10,8 +10,8 @@ OBJS = boot.o kernel.o k_lib.o
 kernel.bin: $(OBJS)
 	$(LD) -T linker.ld -o kernel.bin $(OBJS) -nostdlib
 
-boot.o: boot.s
-	$(AS) boot.s -o boot.o
+boot.o: boot.asm
+	$(AS) boot.asm -o boot.o
 
 kernel.o: kernel.c
 	$(CC) $(CFLAGS) -c kernel.c -o kernel.o
