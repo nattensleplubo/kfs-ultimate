@@ -170,6 +170,7 @@ void	terminal_writestring(const char* data)
 	terminal_write(data, strlen(data));
 }
 
+//	Clears the terminal
 void	terminal_clear(void) {
 	for (size_t y = 0; y < VGA_HEIGHT; y++) {
 		for (size_t x = 0; x < VGA_WIDTH; x++) {
@@ -190,6 +191,8 @@ void	terminal_writestring_at(const char *str, size_t x, size_t y) {
 	terminal_setpos(x, y);
 	terminal_writestring(str);
 }
+
+// void	terminal_replace_vga_memory()
 
 static void delay(void)
 {
