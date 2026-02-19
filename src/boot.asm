@@ -21,7 +21,7 @@ _start:
 	call	halt
 
 section .bss
-resb 8192
+align 16
 stack_space:
-	resb	8092
+	resb	16384
 stack_top:
