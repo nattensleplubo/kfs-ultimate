@@ -10,7 +10,6 @@ size_t	strlen(const char *str) {
 	return len;
 }
 
-
 /*
  * Compares two strings and returns the difference. 0 if not
  */

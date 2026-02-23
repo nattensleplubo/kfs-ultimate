@@ -1,52 +1,4 @@
-#include	<stdint.h>
-#include	"k_lib.h"
-
-// VGA DEFINES
-# define	VGA_MEMORY	0xB8000
-# define	VGA_WIDTH	80
-# define	VGA_HEIGHT  25
-
-# define	TAB_COUNT		9
-# define	SCREEN_CELLS	(VGA_WIDTH * VGA_HEIGHT)
-
-# define	KEYBOARD_DATA_PORT		0x60
-# define	KEYBOARD_STATUS_PORT	0x64
-
-typedef struct	s_tab {
-	uint16_t	buffer[SCREEN_CELLS];
-	size_t		row;
-	size_t		col;
-	uint8_t		color;
-} t_tab;
-
-// CONSTANTS
-size_t				terminal_row;
-size_t				terminal_column;
-uint8_t				terminal_color;
-uint16_t*			terminal_buffer = (uint16_t*)VGA_MEMORY;
-static t_tab		tabs[TAB_COUNT];
-static uint8_t		current_tab = 0;
-
-// VGA HELPERS
-/* Hardware text mode color constants. */
-enum vga_color {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
-};
+#include "kernel.h"
 
 unsigned char keyboard_map[128] = {
 	0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -87,28 +39,6 @@ unsigned char keyboard_map[128] = {
 	0,	/* All other keys are undefined */
 };
 
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
-{
-	return fg | bg << 4;
-}
-
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
-{
-	return (uint16_t) uc | (uint16_t) color << 8;
-}
-
-
-//########################## START KEYB FUNCS ##########################//
-static inline uint8_t	inb(uint16_t port) {
-	uint8_t	result;
-	__asm__ volatile("in %1, %0" : "=a"(result) : "Nd"(port));
-	return result;
-}
-
-static inline int	keyboard_has_data(void) {
-	return inb(KEYBOARD_STATUS_PORT) & 0x01;
-}
-
 uint8_t	read_keyboard(void) {
 	return inb(KEYBOARD_DATA_PORT);
 }
@@ -121,110 +51,7 @@ void	handle_keyboard(void) {
 		}
 	}
 }
-//########################## END KEYB FUNCS ##########################//
 
-
-// INIT
-void	terminal_init(void) {
-	terminal_row = 0;
-	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
-}
-
-void	terminal_setcolor(uint8_t color) {
-	terminal_color = color;
-}
-
-void	buffer_setcolor(uint8_t color, uint8_t buffer) {
-	tabs[buffer].color = color;
-}
-
-void	terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
-	const size_t i = y * VGA_WIDTH + x;
-	terminal_buffer[i] = vga_entry(c, color);
-}
-
-void	buffer_putentryat(char c, uint8_t buffer, size_t x, size_t y) {
-	const size_t i = y * VGA_WIDTH + x;
-	terminal_buffer[i] = vga_entry(c, tabs[buffer].color);
-}
-
-void	terminal_putchar(char c) {
-	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == VGA_WIDTH) {
-		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
-	}
-}
-
-void	buffer_putchar(char c, uint8_t buffer) {
-	buffer_putentryat(c, buffer, tabs[buffer].col, tabs[buffer].row);
-	if (++tabs[buffer].col == VGA_WIDTH) {
-		tabs[buffer].col = 0;
-		if (tabs[buffer].row == VGA_HEIGHT)
-			tabs[buffer].row = 0;
-	}
-}
-
-void	terminal_write(const char* data, size_t size) {
-	for (size_t i = 0; i < size; i++)
-		terminal_putchar(data[i]);
-}
-
-void	buffer_write(const char* data, size_t size, uint8_t buffer) {
-	for (size_t i = 0; i < size; i++)
-		buffer_putchar(data[i], buffer);
-}
-
-void	terminal_writestring(const char* data) {
-	terminal_write(data, strlen(data));
-}
-
-void	buffer_writestring(const char* data, uint8_t buffer) {
-	buffer_write(data, strlen(data), buffer);
-}
-
-//	Clears the terminal
-void	terminal_clear(void) {
-	for (size_t y = 0; y < VGA_HEIGHT; y++) {
-		for (size_t x = 0; x < VGA_WIDTH; x++) {
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
-	terminal_row = 0;
-	terminal_column = 0;
-}
-
-void	terminal_setpos(size_t x, size_t y) {
-	terminal_column = x;
-	terminal_row = y;
-}
-
-void	buffer_setpos(size_t x, size_t y, uint8_t buffer) {
-	tabs[buffer].col = x;
-	tabs[buffer].row = y;
-}
-
-void	terminal_writestring_at(const char *str, size_t x, size_t y) {
-	terminal_setpos(x, y);
-	terminal_writestring(str);
-}
-
-void	buffer_writestring_at(const char* str, size_t x, size_t y, uint8_t buffer) {
-	buffer_setpos(x, y, buffer);
-	buffer_writestring(str, buffer);
-}
-
-// void	terminal_replace_vga_memory()
 
 static void delay(void)
 {
