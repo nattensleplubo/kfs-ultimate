@@ -3,4 +3,6 @@
 
 #include <stdarg.h>
 
+void printk(const char *format, ...);
+
 #endif

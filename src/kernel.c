@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "printk.h"
 
 unsigned char keyboard_map[128] = {
 	0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -62,7 +63,7 @@ static void delay(void)
 ////////// MAIN //////////
 void	kernel_main(void) {
 	terminal_init();
-	terminal_writestring("Hello, kernel World!\n");
+	printk("my favorite letter is %c and my name is %s and i am %x years old\n", 's', "nathan", 42);
 	while (1) {
 		handle_keyboard();
 	}
