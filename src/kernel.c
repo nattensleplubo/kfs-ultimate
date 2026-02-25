@@ -40,6 +40,17 @@ unsigned char keyboard_map[128] = {
 	0,	/* All other keys are undefined */
 };
 
+size_t		terminal_row;
+size_t		terminal_column;
+uint8_t		terminal_color;
+uint16_t*	terminal_buffer = (uint16_t*)VGA_MEMORY;
+t_tab		tabs[TAB_COUNT];
+uint8_t		current_tab = 0;
+
+t_tab	*get_tab() {
+	return tabs;
+}
+
 uint8_t	read_keyboard(void) {
 	return inb(KEYBOARD_DATA_PORT);
 }
@@ -48,7 +59,12 @@ void	handle_keyboard(void) {
 	if (keyboard_has_data()) {
 		uint8_t	scancode = read_keyboard();
 		if (!(scancode & 0x80)) {
-			terminal_putchar(keyboard_map[scancode]);
+			if (keyboard_map[scancode] != '\n')
+				terminal_putchar(keyboard_map[scancode]);
+			else {
+				printk("c%d r%d", terminal_column, terminal_row);
+			}
+				
 		}
 	}
 }

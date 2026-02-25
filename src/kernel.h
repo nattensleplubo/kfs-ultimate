@@ -27,12 +27,11 @@ typedef struct	s_tab {
 } t_tab;
 
 // GLOBALS
-static size_t		terminal_row;
-static size_t		terminal_column;
-static uint8_t		terminal_color;
-static uint16_t*	terminal_buffer = (uint16_t*)VGA_MEMORY;
-static t_tab		tabs[TAB_COUNT];
-static uint8_t		current_tab = 0;
+extern size_t		terminal_row;
+extern size_t		terminal_column;
+extern uint8_t		terminal_color;
+extern uint16_t*	terminal_buffer;
+extern uint8_t		current_tab;
 
 // KEYBOARD MAP
 extern unsigned char keyboard_map[128];
@@ -47,5 +46,7 @@ static inline uint8_t	inb(uint16_t port) {
 static inline int	keyboard_has_data(void) {
 	return inb(KEYBOARD_STATUS_PORT) & 0x01;
 }
+
+t_tab	*get_tab();
 
 #endif

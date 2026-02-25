@@ -20,7 +20,8 @@ void	terminal_setcolor(uint8_t color) {
 }
 
 void	buffer_setcolor(uint8_t color, uint8_t buffer) {
-	tabs[buffer].color = color;
+	t_tab *t = get_tab();
+	t[buffer].color = color;
 }
 
 void	terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
@@ -29,8 +30,9 @@ void	terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
 }
 
 void	buffer_putentryat(char c, uint8_t buffer, size_t x, size_t y) {
+	t_tab *t = get_tab();
 	const size_t i = y * VGA_WIDTH + x;
-	terminal_buffer[i] = vga_entry(c, tabs[buffer].color);
+	terminal_buffer[i] = vga_entry(c, t[buffer].color);
 }
 
 void	terminal_putchar(char c) {
@@ -43,11 +45,12 @@ void	terminal_putchar(char c) {
 }
 
 void	buffer_putchar(char c, uint8_t buffer) {
-	buffer_putentryat(c, buffer, tabs[buffer].col, tabs[buffer].row);
-	if (++tabs[buffer].col == VGA_WIDTH) {
-		tabs[buffer].col = 0;
-		if (tabs[buffer].row == VGA_HEIGHT)
-			tabs[buffer].row = 0;
+	t_tab *t = get_tab();
+	buffer_putentryat(c, buffer, t[buffer].col, t[buffer].row);
+	if (++t[buffer].col == VGA_WIDTH) {
+		t[buffer].col = 0;
+		if (t[buffer].row == VGA_HEIGHT)
+			t[buffer].row = 0;
 	}
 }
 
@@ -87,8 +90,9 @@ void	terminal_setpos(size_t x, size_t y) {
 }
 
 void	buffer_setpos(size_t x, size_t y, uint8_t buffer) {
-	tabs[buffer].col = x;
-	tabs[buffer].row = y;
+	t_tab *t = get_tab();
+	t[buffer].col = x;
+	t[buffer].row = y;
 }
 
 void	terminal_writestring_at(const char *str, size_t x, size_t y) {
@@ -102,9 +106,10 @@ void	buffer_writestring_at(const char* str, size_t x, size_t y, uint8_t buffer) 
 }
 
 void	terminal_replace_vga_memory(uint8_t buffer) {
+	t_tab *t = get_tab();
 	int i = 0;
 	while (i < SCREEN_CELLS) {
-		terminal_buffer[i] = tabs[buffer].buffer[i];
+		terminal_buffer[i] = t[buffer].buffer[i];
 		i++;
 	}
 }
