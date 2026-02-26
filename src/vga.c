@@ -17,8 +17,10 @@ static uint16_t tab_get_cell(size_t x, size_t y) {
 // ── Tab init ─────────────────────────────────────────────────────────────────
 
 void tab_init(uint8_t tab_id) {
-    t_tab   *t = &tabs[tab_id];
-    uint8_t  color = vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+    t_tab   *t = &tabs[tab_id];	
+	uint8_t  color = vga_entry_color(tab_id + 1, VGA_COLOR_BLACK);
+	if (tab_id == 0)
+		color = vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 
     t->out_row   = 0;
     t->out_col   = 0;
@@ -115,7 +117,7 @@ void tab_clear_output(void) {
  */
 void tab_render_input(void) {
     t_tab  *t         = &tabs[current_tab];
-    uint8_t bar_color = vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
+    uint8_t bar_color = vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_BLUE);
     uint16_t *vga     = VGA_BUFFER;
 
     // Prompt
