@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  kernel-build:
+    build: .
+    volumes:
+      - .:/build
+    working_dir: /build
+    stdin_open: true
+    tty: true
