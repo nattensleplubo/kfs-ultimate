@@ -1,22 +1,22 @@
 #include "printk.h"
+#include "kernel.h"
 #include "vga.h"
 #include "k_lib.h"
 
-// ─── Internal buffer writer ──────────────────────────────────────────────────
+// ─── Internal buffer writer ───────────────────────────────────────────────────
 
 typedef struct {
     char    *buf;
     size_t   pos;
-    size_t   size;  // 0 = unbounded (terminal mode)
+    size_t   size;  // 0 = terminal mode
 } t_writer;
 
 static void writer_putchar(t_writer *w, char c) {
     if (w->buf) {
-        // Buffer mode: leave room for null terminator
         if (w->size == 0 || w->pos + 1 < w->size)
             w->buf[w->pos++] = c;
     } else {
-        terminal_putchar(c);
+        tab_output_char(c);
     }
 }
 
@@ -85,25 +85,30 @@ static void vformat(t_writer *w, const char *format, va_list args) {
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /*
- * Prints a formatted string to the terminal (like printf).
+ * Prints a formatted string to the current tab's output area.
+ * After printing, flushes just the output rows to VGA.
  */
 void printk(const char *format, ...) {
     t_writer w = { .buf = NULL, .pos = 0, .size = 0 };
-    va_list args;
+    va_list  args;
 
     va_start(args, format);
     vformat(&w, format, args);
     va_end(args);
+
+    // Flush output rows to VGA
+    uint16_t *vga = VGA_BUFFER;
+    for (size_t i = 0; i < VGA_WIDTH * SHELL_OUTPUT_ROWS; i++)
+        vga[i] = tabs[current_tab].screen[i];
 }
 
 /*
- * Formats a string into buf (at most buf_size - 1 chars + null terminator).
- * Returns the number of characters written (excluding the null terminator).
- * Safe: always null-terminates if buf_size > 0.
+ * Formats a string into buf (at most buf_size-1 chars + null terminator).
+ * Returns the number of characters written (excluding '\0').
  */
 int sprintk(char *buf, size_t buf_size, const char *format, ...) {
     t_writer w = { .buf = buf, .pos = 0, .size = buf_size };
-    va_list args;
+    va_list  args;
 
     if (!buf || buf_size == 0)
         return 0;
