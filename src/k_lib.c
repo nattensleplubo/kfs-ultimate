@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 
 /*
  * Calculates length of a string and returns it as a size_t
@@ -42,4 +43,3 @@ void	*memcpy(void *dest, const void *src, size_t n) {
         *d++ = *s++;
     return dest;
 }
-

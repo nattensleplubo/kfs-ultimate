@@ -31,6 +31,7 @@ typedef struct s_tab {
 
     char        input[INPUT_MAX + 1];   // current input line
     size_t      input_len;              // chars typed so far
+    size_t      cursor_pos; 
 } t_tab;
 
 // GLOBALS
@@ -46,6 +47,12 @@ static inline uint8_t inb(uint16_t port) {
     __asm__ volatile("in %1, %0" : "=a"(result) : "Nd"(port));
     return result;
 }
+
+void outb(uint16_t port, uint8_t value)
+{
+    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
+}
+
 
 static inline int keyboard_has_data(void) {
     return inb(KEYBOARD_STATUS_PORT) & 0x01;

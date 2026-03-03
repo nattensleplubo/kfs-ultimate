@@ -5,6 +5,7 @@
 // ─── Keyboard scancode map ────────────────────────────────────────────────────
 // Special values: 0 = ignored, negative = function keys
 // F1‑F9 => -1 to -9
+static int extended = 0;
 
 unsigned char keyboard_map[128] = {
     0,   27,  '1', '2', '3', '4', '5', '6', '7', '8',
@@ -133,25 +134,45 @@ static uint8_t read_keyboard(void) {
 /*
  * Handle one scancode. Returns 1 if something was processed.
  */
-static void handle_scancode(uint8_t scancode) {
-    // Ignore key releases (bit 7 set)
+static void handle_scancode(uint8_t scancode)
+{
+    // Gestion scancode étendu
+    if (scancode == 0xE0) {
+        extended = 1;
+        return;
+    }
+
+    // Ignore releases
     if (scancode & 0x80)
         return;
 
+    if (extended) {
+        switch (scancode) {
+            case 0x4B: // ←
+                tab_move_cursor_left();
+                break;
+            case 0x4D: // →
+                tab_move_cursor_right();
+                break;
+        }
+        extended = 0;
+        return;
+    }
+
     signed char key = (signed char)keyboard_map[scancode];
 
-    // Function keys F1‑F9 → switch tabs
+    // F1-F9
     if (key <= -1 && key >= -9) {
-        uint8_t new_tab = (uint8_t)(-(key + 1));   // F1→0, F2→1, …
+        uint8_t new_tab = (uint8_t)(-(key + 1));
         if (new_tab != current_tab)
             tab_save_and_switch(new_tab);
         return;
     }
 
     if (key == '\n') {
-        // Submit command
         char cmd_copy[INPUT_MAX + 1];
-        memcpy(cmd_copy, tabs[current_tab].input, tabs[current_tab].input_len + 1);
+        memcpy(cmd_copy, tabs[current_tab].input,
+               tabs[current_tab].input_len + 1);
         tab_input_clear();
         run_command(cmd_copy);
         return;
@@ -176,7 +197,7 @@ void kernel_main(void) {
     // Display on screen
     tab_flush_to_vga();
     tab_render_input();
-
+    enable_cursor(14, 15);
     printk("kshell v0.1  |  tabs: F1-F%d  |  type 'help'\n", TAB_COUNT);
 
     while (1) {

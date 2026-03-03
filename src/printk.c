@@ -102,6 +102,7 @@ void printk(const char *format, ...) {
         vga[i] = tabs[current_tab].screen[i];
 }
 
+
 /*
  * Formats a string into buf (at most buf_size-1 chars + null terminator).
  * Returns the number of characters written (excluding '\0').

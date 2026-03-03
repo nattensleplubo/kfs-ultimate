@@ -2,6 +2,47 @@
 #include "kernel.h"
 #include "k_lib.h"
 
+
+void enable_cursor(uint8_t start, uint8_t end)
+{
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, (inb(0x3D5) & 0xC0) | (start & 0x1F));
+
+    outb(0x3D4, 0x0B);
+    outb(0x3D5, (inb(0x3D5) & 0xE0) | (end & 0x1F));
+}
+
+void move_cursor(size_t x, size_t y)
+{
+    uint16_t pos = y * VGA_WIDTH + x;
+
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t)(pos & 0xFF));
+
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
+}
+
+void tab_move_cursor_left(void)
+{
+    t_tab *t = &tabs[current_tab];
+
+    if (t->cursor_pos > 0)
+        t->cursor_pos--;
+
+    tab_update_cursor();
+}
+
+void tab_move_cursor_right(void)
+{
+    t_tab *t = &tabs[current_tab];
+
+    if (t->cursor_pos < t->input_len)
+        t->cursor_pos++;
+
+    tab_update_cursor();
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 // Write a cell directly into the current tab's screen buffer
@@ -27,6 +68,7 @@ void tab_init(uint8_t tab_id) {
     t->color     = color;
     t->input_len = 0;
     t->input[0]  = '\0';
+    t->cursor_pos = 0;
 
     for (size_t y = 0; y < VGA_HEIGHT; y++)
         for (size_t x = 0; x < VGA_WIDTH; x++)
@@ -111,6 +153,12 @@ void tab_clear_output(void) {
 
 // ── Input bar ────────────────────────────────────────────────────────────────
 
+void tab_update_cursor(void)
+{
+    t_tab *t = &tabs[current_tab];
+    move_cursor(2 + t->cursor_pos, SHELL_INPUT_ROW);
+}
+
 /*
  * Redraw the entire input bar from the current tab's input buffer.
  * Layout: "> " + input chars + spaces to fill width
@@ -133,29 +181,51 @@ void tab_render_input(void) {
     // Blit just the input row directly to VGA (fast path)
     for (size_t x = 0; x < VGA_WIDTH; x++)
         vga[SHELL_INPUT_ROW * VGA_WIDTH + x] = t->screen[SHELL_INPUT_ROW * VGA_WIDTH + x];
+    tab_update_cursor();
 }
 
-void tab_input_putchar(char c) {
+void tab_input_putchar(char c)
+{
     t_tab *t = &tabs[current_tab];
-    if (t->input_len < INPUT_MAX) {
-        t->input[t->input_len++] = c;
-        t->input[t->input_len]   = '\0';
-        tab_render_input();
-    }
+
+    if (t->input_len >= INPUT_MAX)
+        return;
+
+    // Décaler à droite
+    for (size_t i = t->input_len; i > t->cursor_pos; i--)
+        t->input[i] = t->input[i - 1];
+
+    t->input[t->cursor_pos] = c;
+
+    t->input_len++;
+    t->cursor_pos++;
+    t->input[t->input_len] = '\0';
+
+    tab_render_input();
 }
 
-void tab_input_backspace(void) {
+void tab_input_backspace(void)
+{
     t_tab *t = &tabs[current_tab];
-    if (t->input_len > 0) {
-        t->input[--t->input_len] = '\0';
-        tab_render_input();
-    }
+
+    if (t->cursor_pos == 0)
+        return;
+
+    for (size_t i = t->cursor_pos - 1; i < t->input_len - 1; i++)
+        t->input[i] = t->input[i + 1];
+
+    t->input_len--;
+    t->cursor_pos--;
+    t->input[t->input_len] = '\0';
+
+    tab_render_input();
 }
 
 void tab_input_clear(void) {
     t_tab *t = &tabs[current_tab];
     t->input_len = 0;
     t->input[0]  = '\0';
+    t->cursor_pos = 0;
     tab_render_input();
 }
 
@@ -166,4 +236,5 @@ void tab_save_and_switch(uint8_t new_tab) {
     current_tab = new_tab;
     tab_flush_to_vga();
     tab_render_input();
+    tab_update_cursor(); 
 }

@@ -31,7 +31,7 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
     return (uint16_t)uc | ((uint16_t)color << 8);
 }
-
+void outb(uint16_t port, uint8_t value);
 // Direct hardware VGA buffer pointer
 #define VGA_BUFFER ((uint16_t *)0xB8000)
 
@@ -53,5 +53,12 @@ void    tab_save_and_switch(uint8_t new_tab);   // save current, load new
 
 // ── Full screen refresh ──────────────────────────────────────────────────────
 void    tab_flush_to_vga(void);             // blit current tab's screen to VGA
+
+// ── Cursor ───────────────────────────────────────────────────────────────────
+void    enable_cursor(uint8_t start, uint8_t end);
+void    move_cursor(size_t x, size_t y);
+void    tab_update_cursor(void);
+void    tab_move_cursor_left(void);
+void    tab_move_cursor_right(void);
 
 #endif
