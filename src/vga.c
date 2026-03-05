@@ -57,6 +57,12 @@ void tab_update_cursor(void)
     move_cursor(2 + t->cursor_pos, SHELL_INPUT_ROW);
 }
 
+
+void outb(uint16_t port, uint8_t value)
+{
+    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 // Write a cell directly into the current tab's screen buffer
