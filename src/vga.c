@@ -2,7 +2,11 @@
 #include "kernel.h"
 #include "k_lib.h"
 
+// ── Cursor ──────────────────────────────────────────────────────────────────
 
+// Enabling the Cursor
+// allows you to set the start and end scanlines, the rows where the cursor starts and ends. 
+// The highest scanline is 0 and the lowest scanline is the maximum scanline (usually 15).
 void enable_cursor(uint8_t start, uint8_t end)
 {
     outb(0x3D4, 0x0A);
@@ -11,6 +15,10 @@ void enable_cursor(uint8_t start, uint8_t end)
     outb(0x3D4, 0x0B);
     outb(0x3D5, (inb(0x3D5) & 0xE0) | (end & 0x1F));
 }
+
+// Moving the Cursor
+// Update the cursor's location every time a new character is displayed. 
+// It would be faster to instead only update it after printing an entire string.
 
 void move_cursor(size_t x, size_t y)
 {
@@ -29,18 +37,24 @@ void tab_move_cursor_left(void)
 
     if (t->cursor_pos > 0)
         t->cursor_pos--;
-
+    
     tab_update_cursor();
 }
 
 void tab_move_cursor_right(void)
 {
     t_tab *t = &tabs[current_tab];
-
+    
     if (t->cursor_pos < t->input_len)
-        t->cursor_pos++;
+    t->cursor_pos++;
 
     tab_update_cursor();
+}
+
+void tab_update_cursor(void)
+{
+    t_tab *t = &tabs[current_tab];
+    move_cursor(2 + t->cursor_pos, SHELL_INPUT_ROW);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -152,12 +166,6 @@ void tab_clear_output(void) {
 }
 
 // ── Input bar ────────────────────────────────────────────────────────────────
-
-void tab_update_cursor(void)
-{
-    t_tab *t = &tabs[current_tab];
-    move_cursor(2 + t->cursor_pos, SHELL_INPUT_ROW);
-}
 
 /*
  * Redraw the entire input bar from the current tab's input buffer.
