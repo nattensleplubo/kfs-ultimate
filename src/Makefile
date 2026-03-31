@@ -1,7 +1,7 @@
 AS = nasm -f elf32 -g -F dwarf
 CC = gcc -m32
 LD = ld -m elf_i386
-CFLAGS = -std=c99 -ffreestanding -O2 -Wall -Wextra \
+CFLAGS = -std=c99 -ffreestanding -O2 -Wall -Wextra -Werror \
      -fno-builtin -fno-stack-protector -nostdlib -nodefaultlibs
 
 C_SOURCES = $(wildcard *.c)
@@ -33,8 +33,14 @@ run-iso: docker-iso
 	qemu-system-i386 -cdrom mykernel.iso
 
 clean:
-	rm -f *.o kernel.bin mykernel.iso
 	rm -rf isodir
+	rm -f *.o
+
+fclean: clean
+	rm -f kernel.bin mykernel.iso
+
+re: fclean docker-iso
+
 
 docker-build:
 	docker-compose build

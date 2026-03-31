@@ -71,9 +71,10 @@ static void tab_set_cell(size_t x, size_t y, char c, uint8_t color) {
 }
 
 // Read a cell from the current tab's screen buffer
-static uint16_t tab_get_cell(size_t x, size_t y) {
-    return tabs[current_tab].screen[y * VGA_WIDTH + x];
-}
+// /!\ UNUSED FOR NOW
+// static uint16_t tab_get_cell(size_t x, size_t y) {
+//     return tabs[current_tab].screen[y * VGA_WIDTH + x];
+// }
 
 // ── Tab init ─────────────────────────────────────────────────────────────────
 
