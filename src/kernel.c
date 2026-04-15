@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "printk.h"
 #include "k_lib.h"
+#include "gdt.h"
 
 // ─── Keyboard scancode map ────────────────────────────────────────────────────
 // Special values: 0 = ignored, negative = function keys
@@ -80,6 +81,11 @@ static void cmd_tab(const char *args) {
     printk("current tab: %d\n", current_tab + 1);
 }
 
+static void cmd_stack(const char *args) {
+    (void)args;
+    print_stack();
+}
+
 static void cmd_color(const char *args) {
     if (!args || !args[0]) {
         printk("usage: color <0-f>\n");
@@ -121,6 +127,8 @@ static void run_command(const char *line) {
         cmd_tab(args);
     else if (!strcmp(cmd, "color"))
         cmd_color(args);
+    else if (!strcmp(cmd, "stack"))
+        cmd_stack(args);
     else
         printk("unknown command: %s\n", cmd);
 }
@@ -189,7 +197,36 @@ static void handle_scancode(uint8_t scancode)
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
+void print_stack(void) {
+    uint32_t esp;
+    uint32_t ebp;
+
+    __asm__ volatile("mov %%esp, %0" : "=r"(esp));
+    __asm__ volatile("mov %%ebp, %0" : "=r"(ebp));
+
+    printk("esp     : 0x%x\n", esp);
+    printk("ebp     : 0x%x\n", ebp);
+    printk("depth   : return address\n");
+
+    uint32_t frame = ebp;
+    int      depth = 0;
+
+    while (frame && depth < 16) {
+        uint32_t ret  = *(uint32_t *)(frame + 4);
+        uint32_t prev = *(uint32_t *)(frame);
+
+        printk("  [%d] 0x%x\n", depth, ret);
+
+        if (prev == 0 || prev <= frame)
+            break;
+        frame = prev;
+        depth++;
+    }
+}
+
 void kernel_main(void) {
+    // Initialize gdt
+    gdt_init();
     // Initialize all tabs
     for (uint8_t i = 0; i < TAB_COUNT; i++)
         tab_init(i);

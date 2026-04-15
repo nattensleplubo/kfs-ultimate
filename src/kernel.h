@@ -56,5 +56,6 @@ static inline int keyboard_has_data(void) {
 
 // FUNCTION PROTOTYPES
 void    kernel_main(void);
+void    print_stack(void);
 
 #endif
