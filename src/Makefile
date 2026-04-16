@@ -8,6 +8,9 @@ C_SOURCES = $(wildcard *.c)
 C_OBJS = $(C_SOURCES:.c=.o)
 OBJS = boot.o $(C_OBJS)
 
+DOCKER_IMAGE = localhost/kernel-build
+DOCKER_RUN = docker run --rm -v $(PWD):/build -w /build $(DOCKER_IMAGE)
+
 kernel.bin: $(OBJS)
 	$(LD) -T linker.ld -o kernel.bin $(OBJS) -nostdlib
 
@@ -42,18 +45,18 @@ fclean: clean
 re: fclean docker-iso
 
 docker-build:
-	docker-compose build
+	docker build -t $(DOCKER_IMAGE) .
 
 docker-iso:
-	docker-compose run --rm kernel-build make iso
+	$(DOCKER_RUN) make iso
 
 docker-run:
-	docker-compose run --rm kernel-build make run-iso
+	$(DOCKER_RUN) make run-iso
 
 docker-shell:
-	docker-compose run --rm kernel-build bash
+	docker run --rm -it -v $(PWD):/build -w /build $(DOCKER_IMAGE) bash
 
 docker-clean:
-	docker-compose run --rm kernel-build make clean
+	$(DOCKER_RUN) make clean
 
 .PHONY: docker-build docker-iso docker-run docker-shell docker-clean clean run run-iso iso

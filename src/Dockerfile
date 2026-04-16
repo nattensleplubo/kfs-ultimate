@@ -1,23 +1,18 @@
-FROM	ubuntu:22.04
+FROM debian:bookworm-slim
 
-ENV	DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN	apt-get update && apt-get install -y \
-	grub2-common \
-	build-essential \
-	nasm \
-	gcc \
-	g++ \
-	make \
-	grub-pc-bin \
-	grub-common \
-	xorriso \
-	mtools \
-	qemu-system-x86 \
-	&& rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    nasm \
+    gcc \
+    make \
+    grub-pc-bin \
+    grub-common \
+    xorriso \
+    mtools \
+    && rm -rf /var/lib/apt/lists/*
 
-VOLUME	/build
+WORKDIR /build
 
-WORKDIR	/build
-
-CMD	["/bin/bash"]
+CMD ["/bin/bash"]
