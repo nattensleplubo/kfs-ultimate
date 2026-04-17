@@ -17,7 +17,7 @@ typedef struct __attribute__((packed)) {
 // What lgdt receives: size of table -1 and it's address
 typedef struct __attribute__((packed)) {
     uint16_t    limit;
-    uint16_t    base;
+    uint32_t    base;
 }   t_gdt_ptr;
 
 void    gdt_init(void);
