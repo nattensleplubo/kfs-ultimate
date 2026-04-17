@@ -64,6 +64,9 @@ static void cmd_help(const char *args) {
     printk("  echo <text>   - print text\n");
     printk("  tab           - show current tab number\n");
     printk("  color <0-f>   - change text color (hex)\n");
+    printk("  stack         - prints current stack\n");
+    printk("  reboot        - reboots the machine\n");
+    printk("  shutdown      - turns off the machine\n");
 }
 
 static void cmd_clear(const char *args) {
@@ -105,6 +108,17 @@ static void cmd_color(const char *args) {
     printk("color set\n");
 }
 
+static void cmd_reboot(const char *args) {
+    (void)args;
+    outb(0x64, 0xFE);
+}
+
+static void cmd_shutdown(const char *args) {
+    (void)args;
+    outb(0x604, 0x00);  // Qemu power off thing (?)
+    __asm__ volatile("hlt"); // if ts don't work
+}
+
 static void run_command(const char *line) {
     char        cmd[INPUT_MAX + 1];
     const char *args;
@@ -129,6 +143,10 @@ static void run_command(const char *line) {
         cmd_color(args);
     else if (!strcmp(cmd, "stack"))
         cmd_stack(args);
+    else if (!strcmp(cmd, "reboot"))
+        cmd_reboot(args);
+    else if (!strcmp(cmd, "shutdown"))
+        cmd_shutdown(args);
     else
         printk("unknown command: %s\n", cmd);
 }
